@@ -66,6 +66,7 @@ func handleSession(f *Forwarder, key string, session *Session) {
                         verbosePrintf("Sended %d bytes to %s\n", n, session.clientAddr.String())
                 }
         }
+        session.serverConn.Close()
         delete(f.sessions, key)
         log.Printf("%s ended", key)
 }
