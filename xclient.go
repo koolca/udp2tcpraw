@@ -51,6 +51,7 @@ func verbosePrintf(format string, v ...interface{}) {
 }
 
 func handleSession(f *Forwarder, key string, session *Session) {
+        defer session.serverConn.Close()
         log.Printf("%s started", key)
         data := make([]byte, *bufferSize)
         for {
@@ -66,7 +67,6 @@ func handleSession(f *Forwarder, key string, session *Session) {
                         verbosePrintf("Sended %d bytes to %s\n", n, session.clientAddr.String())
                 }
         }
-        session.serverConn.Close()
         delete(f.sessions, key)
         log.Printf("%s ended", key)
 }
@@ -164,12 +164,14 @@ func main() {
                 fromAndTo := strings.Split(pair, "~")
                 if len(fromAndTo) != 2 {
                         log.Printf("Invalid from,to %s", fromAndTo)
-                        break
+                        //break
+                        return
                 }
                 _, err := forward(fromAndTo[0], fromAndTo[1])
                 if err != nil {
                         log.Printf("Error while create fw, %s", err)
-                        break
+                        //break
+                        return
                 }
         }
         WaitForCtrlC()
