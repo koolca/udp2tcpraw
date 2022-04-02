@@ -51,6 +51,7 @@ func verbosePrintf(format string, v ...interface{}) {
 }
 
 func handleSession(f *Forwarder, key string, session *Session) {
+        defer session.serverConn.Close()
         log.Printf("%s started", key)
         data := make([]byte, *bufferSize)
         for {
@@ -71,6 +72,7 @@ func handleSession(f *Forwarder, key string, session *Session) {
 }
 
 func receivingFromClient(f *Forwarder) {
+        defer f.localConn.Close()
         data := make([]byte, *bufferSize)
         for {
                 //n, clientAddr, err := f.localConn.ReadFromUDP(data)
@@ -78,6 +80,7 @@ func receivingFromClient(f *Forwarder) {
                 if err != nil {
                         log.Printf("error during read: %s", err)
                         continue
+                        //break
                 }
                 xor(data, n)
                 verbosePrintf("<%s> size: %d\n", clientAddr, n)
@@ -92,6 +95,7 @@ func receivingFromClient(f *Forwarder) {
                                 session.serverConn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(*timeout)))
                         }
                 } else if serverConn, err := net.DialUDP("udp", nil, f.toAddr); err == nil {
+                        defer serverConn.Close()
                         log.Printf("(new) Write to %s\n", f.toAddr.String())
                         _, err := serverConn.Write(data[:n])
                         if err != nil {
@@ -128,6 +132,16 @@ func forward(from string, to string) (*Forwarder, error) {
                 return nil, err
         }
 
+        //if err := localConn.SetDSCP(46); err != nil {
+        //        log.Println("SetDSCP:", err)
+        //}
+        //if err := localConn.SetReadBuffer(1024*1024); err != nil {
+        //        log.Println("SetReadBuffer:", err)
+        //}
+        //if err := localConn.SetWriteBuffer(4*1024*1024); err != nil {
+        //        log.Println("SetWriteBuffer:", err)
+        //}
+
         f := Forwarder{
                 fromAddr:  fromAddr,
                 toAddr:    toAddr,
@@ -162,12 +176,14 @@ func main() {
                 fromAndTo := strings.Split(pair, "~")
                 if len(fromAndTo) != 2 {
                         log.Printf("Invalid from,to %s", fromAndTo)
-                        break
+                        //break
+                        return
                 }
                 _, err := forward(fromAndTo[0], fromAndTo[1])
                 if err != nil {
                         log.Printf("Error while create fw, %s", err)
-                        break
+                        //break
+                        return
                 }
         }
         WaitForCtrlC()
