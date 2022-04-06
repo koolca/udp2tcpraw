@@ -55,7 +55,10 @@ func handleSession(f *Forwarder, key string, session *Session) {
         log.Printf("%s started", key)
         data := make([]byte, *bufferSize)
         for {
+                //if *sessionTimeoutByRemoteOnly == false {
+                //session.serverConn.SetReadDeadline(time.Now().Add(30 * time.Second))
                 session.serverConn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(*timeout)))
+                //}
                 if n, _, err := session.serverConn.ReadFromUDP(data); err != nil {
                         log.Printf("Error while read from server, %s", err)
                         break
@@ -72,9 +75,10 @@ func handleSession(f *Forwarder, key string, session *Session) {
 }
 
 func receivingFromClient(f *Forwarder) {
-        defer f.localConn.Close()
+        //defer f.localConn.Close()
         data := make([]byte, *bufferSize)
         for {
+                //f.localConn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(*timeout)))
                 //n, clientAddr, err := f.localConn.ReadFromUDP(data)
                 n, clientAddr, err := f.localConn.ReadFrom(data)
                 if err != nil {
@@ -93,6 +97,7 @@ func receivingFromClient(f *Forwarder) {
                         }
                         if *sessionTimeoutByRemoteOnly == false {
                                 session.serverConn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(*timeout)))
+                                //session.serverConn.SetReadDeadline(time.Now().Add(30 * time.Second))
                         }
                 } else if serverConn, err := net.DialUDP("udp", nil, f.toAddr); err == nil {
                         defer serverConn.Close()
