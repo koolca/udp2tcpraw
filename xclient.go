@@ -56,6 +56,7 @@ func handleSession(f *Forwarder, key string, session *Session) {
         data := make([]byte, *bufferSize)
         for {
                 session.serverConn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(*timeout)))
+                //session.serverConn.SetReadDeadline(time.Now().Add(30 * time.Second))
                 //if n, _, err := session.serverConn.ReadFromUDP(data); err != nil {
                 if n, _, err := session.serverConn.ReadFrom(data); err != nil {
                         log.Printf("Error while read from server, %s", err)
@@ -89,9 +90,9 @@ func receivingFromClient(f *Forwarder) {
                         if err != nil {
                                 log.Printf("Error while write to server, %s", err)
                         }
-                        if *sessionTimeoutByRemoteOnly == false {
-                                session.serverConn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(*timeout)))
-                        }
+                        //if *sessionTimeoutByRemoteOnly == false {
+                        //        session.serverConn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(*timeout)))
+                        //}
                 //} else if serverConn, err := net.DialUDP("udp", nil, f.toAddr); err == nil {
                 } else if serverConn, err := tcpraw.Dial("tcp", f.toAddr.String()); err == nil {
                         log.Printf("(new) Write to %s\n", f.toAddr.String())
